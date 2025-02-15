@@ -1,7 +1,7 @@
 import express from "express";
-import Delivery from "../models/delivery.js";
+import Delivery from "../models/Delivery.js";
+import User from "../models/User.js";
 import { getDistance } from "../utils/index.js";
-import User from "../models/user.js";
 
 export const router = express.Router();
 const RATE_PER_KM = 2;
