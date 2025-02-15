@@ -94,7 +94,8 @@ if (cluster.isPrimary) {
     socket.on("join_room", async (roomId, callback) => {
       try {
         // Get user ID from session
-        const userId = socket.request.session.user._id;
+        const userId = socket.request.session?.user?._id;
+        if (!userId) return callback({ error: "Authentication required" });
         // Check if the room exists
         const room = await ChatRoom.findById(roomId);
         if (!room) {
@@ -218,3 +219,10 @@ if (cluster.isPrimary) {
 
   startService();
 }
+
+// handle server shutdown gracefully
+process.on("SIGINT", async () => {
+  console.log("Closing Redis and MongoDB connections...");
+  await redis.quit();
+  process.exit(0);
+});
