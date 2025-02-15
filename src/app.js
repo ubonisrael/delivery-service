@@ -99,9 +99,12 @@ io.on("connection", (socket) => {
         if (messages.length > 0) {
           const cacheData = messages.map((msg) => JSON.stringify(msg));
           await redis.lpush(`chat:${roomId}`, ...cacheData);
-          await redis.ltrim(`chat:${roomId}`, 0, 49); // Store only the latest 50
+          await redis.ltrim(`chat:${roomId}`, 0, 19); // Store only the latest 20
         }
       }
+
+      // Reset expiration time on access
+      await redis.expire(`chat:${roomId}`, 86400);
 
       // Send messages back in the correct order (oldest first)
       callback({
@@ -141,6 +144,9 @@ io.on("connection", (socket) => {
         } else {
           callback({ messages: messages.reverse() });
         }
+
+        // Reset expiration time on access
+        await redis.expire(`chat:${roomId}`, 86400);
       } catch (error) {
         callback({ error: "Error loading more messages." });
       }
@@ -151,15 +157,20 @@ io.on("connection", (socket) => {
     const { chatRoom, message } = data;
     const userId = socket.request.session.user._id;
 
-    const newMessage = await Message.create({
+    const newMessage = {
       chatRoom,
       sender: userId,
       message,
-    });
+      createdAt: new Date(),
+    };
 
-    // Store message in Redis (push to the list, keep only last 50 messages)
+    // Store in Redis
     await redis.lpush(`chat:${chatRoom}`, JSON.stringify(newMessage));
-    await redis.ltrim(`chat:${chatRoom}`, 0, 49); // Keep only the latest 50 messages
+    await redis.ltrim(`chat:${chatRoom}`, 0, 19); // Keep last 20 messages
+    await redis.expire(`chat:${chatRoom}`, 86400); // Expire after 24 hours
+
+    // Save to MongoDB
+    await Message.create(newMessage);
 
     io.to(chatRoom).emit("receive_message", newMessage);
   });
