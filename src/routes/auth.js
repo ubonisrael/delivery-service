@@ -1,8 +1,22 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import User from "../models/user.js";
+import User from "../models/User.js";
+import ChatRoom from "../models/ChatRoom.js";
 
 export const router = express.Router();
+
+// Ensure the general chat room exists
+const getGeneralRoom = async () => {
+  let room = await ChatRoom.findOne({ type: "general" });
+  if (!room) {
+    room = await ChatRoom.create({
+      name: "General Chat",
+      members: [],
+      type: "general",
+    });
+  }
+  return room;
+};
 
 router.post("/register", async (req, res) => {
   try {
@@ -13,21 +27,27 @@ router.post("/register", async (req, res) => {
       !location.coordinates ||
       location.coordinates.length !== 2
     ) {
-      return res
-        .status(400)
-        .json({
-          error: "Invalid location format. Expected [longitude, latitude].",
-        });
+      return res.status(400).json({
+        error: "Invalid location format. Expected [longitude, latitude].",
+      });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({
+    const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
       location,
     });
-    res.status(201).json({ message: "User registered successfully" });
+
+    // Add user to the general chat room
+    const generalRoom = await getGeneralRoom();
+    generalRoom.members.push(user._id);
+    await generalRoom.save();
+
+    res
+      .status(201)
+      .json({ message: "User registered and added to General Chat" });
   } catch (error) {
     res.status(400).json({ error: "Registration failed" });
   }
