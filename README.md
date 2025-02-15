@@ -16,23 +16,24 @@ delivery-fee-system
 ├── src
 │   ├── app.js
 │   ├── controllers
-│   │   ├── deliveryController.js
-│   │   ├── groupChatController.js
-│   │   └── privateChatController.js
-│   ├── routes
-│   │   ├── deliveryRoutes.js
-│   │   ├── groupChatRoutes.js
-│   │   └── privateChatRoutes.js
+│   ├── db
+│   │   └── index.js
+│   ├── jobs
+│   │   └── cronJob.js
+│   ├── middlewares
+│   │   └── auth.js
 │   ├── models
-│   │   ├── manufacturer.js
-│   │   ├── wholesaler.js
-│   │   └── message.js
-│   ├── services
-│   │   ├── deliveryService.js
-│   │   ├── groupChatService.js
-│   │   └── privateChatService.js
-│   └── interfaces
-│       └── backendInterface.js
+│   │   ├── ChatGroup.js
+│   │   ├── Delivery.js
+│   │   ├── Message.js
+│   │   └── User.js
+│   ├── routes
+│   │   ├── auth.js
+│   │   ├── chat.js
+│   │   └── delivery.js
+│   └── utils
+│       ├── getDistance.js
+│       └── redisClient.js
 ├── package.json
 ├── .env
 └── README.md
@@ -56,6 +57,11 @@ delivery-fee-system
    ```
 
 4. Create a `.env` file in the root directory and add your environment variables.
+   ```
+   MONGO_URI=<mongo_uri>
+   SESSION_SECRET=<secret_key>
+   ENV=development
+   ```
 
 ## Usage
 
