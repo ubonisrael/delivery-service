@@ -125,11 +125,10 @@ if (cluster.isPrimary) {
             const cacheData = messages.map((msg) => JSON.stringify(msg));
             await redis.lpush(`chat:${roomId}`, ...cacheData);
             await redis.ltrim(`chat:${roomId}`, 0, 19); // Store only the latest 20
+            // Reset expiration time on access
+            await redis.expire(`chat:${roomId}`, 86400); // Expire after 24 hours
           }
         }
-
-        // Reset expiration time on access
-        await redis.expire(`chat:${roomId}`, 86400);
 
         // Send messages back in the correct order (oldest first)
         callback({
@@ -194,10 +193,13 @@ if (cluster.isPrimary) {
       await redis.ltrim(`chat:${chatRoom}`, 0, 19); // Keep last 20 messages
       await redis.expire(`chat:${chatRoom}`, 86400); // Expire after 24 hours
 
-      // Save to MongoDB
-      await Message.create(newMessage);
+      // Populate sender details before sending
+      const populatedMessage = await Message.findById(newMessage._id).populate(
+        "sender",
+        "name email role location"
+      );
 
-      io.to(chatRoom).emit("receive_message", newMessage);
+      io.to(chatRoom).emit("receive_message", populatedMessage);
     });
 
     socket.on("disconnect", () => {
