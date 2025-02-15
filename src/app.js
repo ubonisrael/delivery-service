@@ -7,6 +7,7 @@ import connectDB from "./db/index.js";
 // routes
 import { router as authRoute } from "./routes/auth.js";
 import { router as deliveryRoute } from "./routes/delivery.js";
+import { router as chatRoute } from "./routes/chat.js";
 // middlewares
 import { requireAuth } from "./middlewares/auth.js";
 
@@ -33,6 +34,7 @@ app.use(
 
 app.use("/api/auth", authRoute);
 app.use("/api/delivery", requireAuth, deliveryRoute)
+app.use("/api/chat", requireAuth, chatRoute)
 
 async function startService() {
   try {
