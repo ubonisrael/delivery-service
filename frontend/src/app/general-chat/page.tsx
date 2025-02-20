@@ -34,7 +34,7 @@ export default function Page() {
       type: string;
     };
   const { socket } = useSocket()
-  // console.log(import.meta.env.PROD, import.meta.env.MODE, import.meta.env.BASE_URL);
+
 
   const [messages, setMessages] = useState<any>([]);
   const [message, setMessage] = useState("");
@@ -50,17 +50,17 @@ export default function Page() {
   function onSubmit(values: z.infer<typeof messageSchema>) {
     if (values.message.trim()) {
       const msg = { ...values, chatRoom: chatId };
-      console.log(msg);
+
       socket.emit("send_message", msg);
       form.reset();
     }
   }
 
   const handleMemberClick = async (memberId: string) => {
-    console.log(memberId);
+
     // create a new chat with member
     socket.emit("create_private_chat", { memberId }, async (response) => {
-      console.log(response);
+
       setUser(prev => ({...prev, chats: [...prev.chats, { name: response.name, type: response.type, _id: response._id}]}));
       // navigate(`/chat/${response.name}`);
     });
@@ -72,7 +72,7 @@ export default function Page() {
     });
 
     socket.on("receive_message", (message) => {
-      console.log(message);
+
       setMessages((prev) => [...prev, message]);
     });
 

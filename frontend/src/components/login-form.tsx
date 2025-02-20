@@ -46,7 +46,7 @@ export function LoginForm({
   const { login } = useAuth();
 
   // async function onSubmit(values: z.infer<typeof loginSchema>) {
-    // console.log(values);
+
     // login(values.email, values.password)
     // const rawResponse = await fetch('http://localhost:3000/api/auth/login', {
     //   method: 'POST',
@@ -70,7 +70,7 @@ export function LoginForm({
     //   },
     // });
   
-    // console.log(content);
+
   // }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

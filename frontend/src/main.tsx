@@ -43,7 +43,7 @@ function App() {
               const chat = user.chats.find(
                 (chat) => chat.name.toLowerCase() === chatName?.toLowerCase()
               );
-              console.log(user.chats, chat);
+
               const response = await Axios.get(`chat/${chat._id}/members`);
               return {
                 chatName,

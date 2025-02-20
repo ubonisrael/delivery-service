@@ -62,7 +62,7 @@ export function RegisterForm({
   const navigate = useNavigate();
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
-    // console.log(values);
+
     const rawResponse = await fetch("http://localhost:3000/api/auth/register", {
       method: "POST",
       headers: {
@@ -92,13 +92,13 @@ export function RegisterForm({
       },
     });
 
-    console.log(content);
+
   }
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
-        console.log(position);
+
 
         setLocation({
           latitude: position.coords.latitude,

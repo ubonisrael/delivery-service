@@ -85,7 +85,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/me", async (req, res) => {
   const chatRooms = await ChatRoom.find({ members: req.session.user._id });
-  console.log(chatRooms);
+
   
   const chats = await Promise.all(
     chatRooms.map(async (room) => {

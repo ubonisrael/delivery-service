@@ -18,7 +18,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     socket.connect(); // Connect when the provider mounts
 
     socket.on("private_chat_created", async (response) => {
-        console.log(response);
+
         setUser(prev => ({...prev, chats: [...prev.chats, { name: response.name, type: response.type, _id: response._id}]}));
       });
     return () => {

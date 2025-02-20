@@ -38,7 +38,7 @@ const isProduction = process.env.ENV === "production";
 
 if (cluster.isPrimary) {
   const numCPUS = availableParallelism();
-  // console.log(numCPUS);
+
 
   // create one worker per available core
   for (let i = 0; i < numCPUS; i++) {
@@ -50,7 +50,7 @@ if (cluster.isPrimary) {
   setupPrimary();
   // Restart workers if they crash
   cluster.on("exit", (worker, code, signal) => {
-    console.log(`Worker ${worker.process.pid} died. Restarting...`);
+
     cluster.fork();
   });
 } else {
@@ -114,9 +114,9 @@ if (cluster.isPrimary) {
   app.use("/api/delivery", requireAuth, deliveryRoute);
   app.use("/api/chat", requireAuth, chatRoute);
 
-  console.log('isProd ===>', isProduction, process.env.ENV);
+
   if (isProduction) {
-    console.log('isProd ===>', isProduction);
+
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
 
@@ -141,7 +141,7 @@ if (cluster.isPrimary) {
   });
 
   io.on("connection", (socket) => {
-    console.log(`User connected: ${socket.id}`);
+
     // add socket id to session
     redis.set(`socket:${socket.request.session.user._id}`, socket.id);
 
@@ -162,7 +162,7 @@ if (cluster.isPrimary) {
         }
 
         socket.join(roomId);
-        console.log(`User ${userId} joined room: ${roomId}`);
+
         // Try fetching messages from Redis
         let cacheActive = true;
         let messages = await redis.lrange(`chat:${roomId}`, 0, -1);
@@ -320,16 +320,16 @@ if (cluster.isPrimary) {
 
     socket.on("disconnect", async () => {
       await redis.del(`socket:${socket.request.session.user._id}`);
-      console.log(`User disconnected: ${socket.id}`);
+
     });
   });
 
   async function startService() {
     try {
       await connectDB(process.env.MONGO_URI);
-      console.log("Connected to database");
+
       server.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+
       });
     } catch (error) {
       console.error("Error connecting to database", error);
@@ -341,7 +341,7 @@ if (cluster.isPrimary) {
 
 // handle server shutdown gracefully
 process.on("SIGINT", async () => {
-  console.log("Closing Redis and MongoDB connections...");
+
   await redis.quit();
   process.exit(0);
 });

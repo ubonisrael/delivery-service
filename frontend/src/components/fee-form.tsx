@@ -48,7 +48,7 @@ export function CalculateDistanceFee({
   });
 
   async function onSubmit(values: z.infer<typeof deliveryLocationSchema>) {
-    console.log(values);
+
     try {
       const res = await Axios.post("delivery/fee", values);
       setOptions({
@@ -56,7 +56,7 @@ export function CalculateDistanceFee({
         fee: res.data.fee,
       });
     } catch (error) {
-      console.error(error);
+
     }
   }
   return (
