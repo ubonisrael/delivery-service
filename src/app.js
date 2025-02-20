@@ -111,6 +111,14 @@ if (cluster.isPrimary) {
   app.use("/api/delivery", requireAuth, deliveryRoute);
   app.use("/api/chat", requireAuth, chatRoute);
 
+  if (isProduction) {
+    app.use(express.static(path.join(__dirname, "frontend", "dist")));
+
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+    });
+  }
+
   // Apply session middleware to Socket.IO
   io.use((socket, next) => {
     sessionMiddleware(socket.request, {}, next);
