@@ -1,7 +1,5 @@
 import cron from "node-cron";
-import Redis from "ioredis";
-
-const redis = new Redis();
+import redis from "../utils/redisClient";
 
 const cleanExpiredKeys = async () => {
   console.log("Running daily Redis cleanup...");

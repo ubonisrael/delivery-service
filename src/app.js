@@ -110,13 +110,6 @@ if (cluster.isPrimary) {
   app.use(morgan("dev"));
   app.use(sessionMiddleware);
 
-  app.use((req, res, next) => {
-    console.log("Auth Middleware - Headers:", req.headers);
-    console.log("Auth Middleware - Cookies:", req.cookies);
-    console.log("Auth Middleware - Session:", req.session);
-    next();
-  });
-
   app.use("/api/auth", authRoute);
   app.use("/api/delivery", requireAuth, deliveryRoute);
   app.use("/api/chat", requireAuth, chatRoute);
