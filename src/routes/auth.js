@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
-import ChatRoom from "../models/ChatRoom.js";
+import ChatRoom from "../models/ChatGroup.js";
 
 export const router = express.Router();
 
@@ -61,8 +61,51 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
-  req.session.user = { id: user._id, role: user.role };
+  const chatRooms = await ChatRoom.find({ members: user._id });
+  const chats = await Promise.all(
+    chatRooms.map(async (room) => {
+      let roomName;
+      if (room.type === "general") {
+        roomName = room.name;
+      } else {
+        const memberId = room.members.filter(
+          (member) => String(member) !== String(user._id)
+        )[0];
+        const member = await User.findById(memberId);
+        roomName = member.name;
+      }
+      
+      return { _id: room._id, name: roomName.replace(/ /g, "_"), type: room.type };
+    })
+  );
+  
+  req.session.user = { ...user._doc, password: null, chats };
   res.json({ message: "Login successful", user: req.session.user });
+});
+
+router.post("/me", async (req, res) => {
+  const chatRooms = await ChatRoom.find({ members: req.session.user._id });
+  console.log(chatRooms);
+  
+  const chats = await Promise.all(
+    chatRooms.map(async (room) => {
+      let roomName;
+      if (room.type === "general") {
+        roomName = room.name;
+      } else {
+        const memberId = room.members.filter(
+          (member) => String(member) !== String(req.session.user._id)
+        )[0];
+        const member = await User.findById(memberId);
+        roomName = member.name;
+      }
+      
+      return { _id: room._id, name: roomName.replace(/ /g, "_"), type: room.type };
+    })
+  );
+
+  req.session.user = { ...req.session.user._doc, password: null, chats };
+  res.json({ user: req.session.user });
 });
 
 router.post("/logout", (req, res) => {
