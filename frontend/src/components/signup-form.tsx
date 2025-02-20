@@ -24,6 +24,7 @@ import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Axios } from "../lib/utils";
 
 const registerSchema = z
   .object({
@@ -62,27 +63,26 @@ export function RegisterForm({
   const navigate = useNavigate();
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
-
-    const rawResponse = await fetch("http://localhost:3000/api/auth/register", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    let toastTitle = "Error";
+    let toastDesc = "An unexpected error occurred.";
+    let toastLabel = "Try again";
+    let toastAction = () => {};
+    try {
+      const response = await Axios.post("auth/register", {
         ...values,
         location: {
           type: "Point",
           coordinates: [values.longitude, values.latitude],
         },
-      }),
-    });
-    const content = await rawResponse.json();
-
-    const toastTitle = content.error ? "Error" : "Success";
-    const toastDesc = content.error ? content.error : content.message;
-    const toastLabel = content.error ? "Try again" : "Go to login page";
-    const toastAction = content.error ? () => {} : () => navigate("/login");
+      });
+      toastTitle = "Success";
+      toastDesc = response.data.message;
+      toastLabel = "Go to login page";
+      toastAction = () => navigate("/login");
+    } catch (error) {
+      console.error(error);
+      toastDesc = error.response.data.error;
+    }
 
     toast(toastTitle, {
       description: toastDesc,
@@ -91,15 +91,11 @@ export function RegisterForm({
         onClick: toastAction,
       },
     });
-
-
   }
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
-
-
         setLocation({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
