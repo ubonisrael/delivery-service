@@ -1,6 +1,9 @@
 import "./jobs/cronJobs.js";
 import express from "express";
 import http from "http";
+import path from "path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import session from "express-session";
@@ -31,7 +34,7 @@ import redis from "./utils/redisClient.js";
 
 dotenv.config();
 
-const isProduction = process.env.ENV !== "development";
+const isProduction = process.env.ENV === "production";
 
 if (cluster.isPrimary) {
   const numCPUS = availableParallelism();
@@ -77,7 +80,7 @@ if (cluster.isPrimary) {
       collectionName: "sessions",
     }),
     cookie: {
-      secure: process.env.ENV === "development" ? false : true,
+      secure: false,
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
     }, // 1 day
@@ -93,32 +96,41 @@ if (cluster.isPrimary) {
   app.use(express.json());
   app.use(helmet());
   app.use(xss());
-  if (!isProduction) {
-    app.use(
-      cors({
-        origin: "http://localhost:5173",
-        credentials: true,
-      })
-    );
-  }
-
+  
+  const corsConfig = {
+    credentials: true,
+    ...(isProduction ? {} : { origin: "http://localhost:5173" }),
+  };
+  app.use(
+    cors(corsConfig)
+  );
+  
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(morgan("dev"));
   app.use(sessionMiddleware);
+
+  app.use((req, res, next) => {
+    console.log("Auth Middleware - Headers:", req.headers);
+    console.log("Auth Middleware - Cookies:", req.cookies);
+    console.log("Auth Middleware - Session:", req.session);
+    next();
+  });
 
   app.use("/api/auth", authRoute);
   app.use("/api/delivery", requireAuth, deliveryRoute);
   app.use("/api/chat", requireAuth, chatRoute);
 
   if (isProduction) {
-    app.use(express.static(path.join(__dirname, "frontend", "dist")));
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+
+    app.use(express.static(path.join(__dirname, "../frontend", "dist")));
 
     app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+      res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
     });
   }
-
   // Apply session middleware to Socket.IO
   io.use((socket, next) => {
     sessionMiddleware(socket.request, {}, next);

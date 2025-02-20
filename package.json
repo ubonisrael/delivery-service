@@ -5,8 +5,8 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "ENV=production node src/app.js",
+    "dev": "ENV=development nodemon src/app.js"
   },
   "dependencies": {
     "@socket.io/cluster-adapter": "^0.2.2",
