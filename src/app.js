@@ -114,7 +114,7 @@ if (cluster.isPrimary) {
   app.use("/api/delivery", requireAuth, deliveryRoute);
   app.use("/api/chat", requireAuth, chatRoute);
 
-  console.log('isProd ===>', isProduction);
+  console.log('isProd ===>', isProduction, process.env.ENV);
   if (isProduction) {
     console.log('isProd ===>', isProduction);
     const __filename = fileURLToPath(import.meta.url);
