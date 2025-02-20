@@ -4,9 +4,9 @@ import User from "../models/User.js";
 import { getDistance } from "../utils/getDistance.js";
 
 export const router = express.Router();
-const RATE_PER_KM = 2;
+const RATE_PER_KM = 1000;
 
-router.post("/calculate", async (req, res) => {
+router.post("/calc", async (req, res) => {
   try {
     const { manufacturerId, wholesalerId } = req.body;
 
@@ -21,6 +21,19 @@ router.post("/calculate", async (req, res) => {
     const fee = distance * RATE_PER_KM;
 
     await Delivery.create({ manufacturerId, wholesalerId, distance, fee });
+    res.json({ distance: distance.toFixed(2), fee: fee.toFixed(2) });
+  } catch (error) {
+    res.status(500).json({ error: "Error calculating fee" });
+  }
+});
+
+router.post("/fee", async (req, res) => {
+  try {
+    const { longitude, latitude } = req.body;
+    
+    const distance = getDistance(req.session.user.location.coordinates, [longitude, latitude]);
+    const fee = distance * RATE_PER_KM;
+
     res.json({ distance: distance.toFixed(2), fee: fee.toFixed(2) });
   } catch (error) {
     res.status(500).json({ error: "Error calculating fee" });
