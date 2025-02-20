@@ -1,9 +1,9 @@
 import express from "express";
-import ChatRoom from "../models/ChatRoom.js";
+import ChatRoom from "../models/ChatGroup.js";
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 
-const router = express.Router();
+export const router = express.Router();
 
 // send message to a chat room
 router.post("/send", async (req, res) => {
@@ -21,15 +21,16 @@ router.post("/send", async (req, res) => {
   }
 });
 
-// Get chat messages
-router.get("/:roomId/messages", async (req, res) => {
+// Get chat members
+router.get("/:roomId/members", async (req, res) => {
   try {
-    const messages = await Message.find({
-      chatRoom: req.params.roomId,
-    }).populate("sender", "name");
-    res.json(messages);
+    const chatRoom = await ChatRoom.findById(req.params.roomId).populate("members");
+    if (!chatRoom) {
+      throw new Error("Chat room not found");
+    }
+    res.json({ members: chatRoom.members });
   } catch (error) {
-    res.status(500).json({ error: "Error fetching messages" });
+    res.status(500).json({ error: "Error fetching members" });
   }
 });
 
