@@ -33,8 +33,7 @@ export default function Page() {
       members: any[];
       type: string;
     };
-  const { socket } = useSocket()
-
+  const { socket } = useSocket();
 
   const [messages, setMessages] = useState<any>([]);
   const [message, setMessage] = useState("");
@@ -57,11 +56,20 @@ export default function Page() {
   }
 
   const handleMemberClick = async (memberId: string) => {
-
     // create a new chat with member
     socket.emit("create_private_chat", { memberId }, async (response) => {
-
-      setUser(prev => ({...prev, chats: [...prev.chats, { name: response.name, type: response.type, _id: response._id}]}));
+      // check if chat exists
+      const chatExists = user.chats.find((chat) => chat._id === response._id);
+      if (!chatExists) {
+        // if it doesn't exist update user state
+        setUser((prev) => ({
+          ...prev,
+          chats: [
+            ...prev.chats,
+            { name: response.name, type: response.type, _id: response._id },
+          ],
+        }));
+      }
       // navigate(`/chat/${response.name}`);
     });
   };
@@ -72,7 +80,6 @@ export default function Page() {
     });
 
     socket.on("receive_message", (message) => {
-
       setMessages((prev) => [...prev, message]);
     });
 
@@ -173,12 +180,14 @@ export default function Page() {
                 </ul>
               </>
             ) : (
-              <CalculateDistanceFee location={(() => {
-                const m = members
-                .filter((member) => member._id != user._id)
-                .map((member) => member.location.coordinates)[0]
-                return { longitude: m[0], latitude: m[1] }
-              })()} />
+              <CalculateDistanceFee
+                location={(() => {
+                  const m = members
+                    .filter((member) => member._id != user._id)
+                    .map((member) => member.location.coordinates)[0];
+                  return { longitude: m[0], latitude: m[1] };
+                })()}
+              />
             )}
           </div>
         </div>

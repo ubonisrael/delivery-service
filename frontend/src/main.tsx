@@ -18,12 +18,13 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/context/authContext";
 import { Axios } from "@/lib/utils";
 import { toast } from "sonner";
+import ErrorPage from "./error";
 
 function App() {
   const { user, setUser } = useAuth();
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route>
+      <Route errorElement={<ErrorPage />}>
         <Route
           path="/"
           element={<Layout />}

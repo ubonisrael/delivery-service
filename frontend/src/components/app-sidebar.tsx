@@ -71,7 +71,7 @@ export function AppSidebar() {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {user.chats.map(
+                            {user.chats.filter(chat => chat.name).map(
                               (chat, i) => (
                                 <SidebarMenuSubItem key={i+chat.name}>
                                   <SidebarMenuSubButton asChild isActive>
