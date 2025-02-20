@@ -5,9 +5,11 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
+    "build": "cd frontend && npm install && npm run build",
     "start": "ENV=production node src/app.js",
     "dev": "ENV=development nodemon src/app.js"
   },
+  "packageManager": "npm@7.24.0",
   "dependencies": {
     "@socket.io/cluster-adapter": "^0.2.2",
     "bcrypt": "^5.1.1",
