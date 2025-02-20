@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useLoaderData } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +34,6 @@ export default function Page() {
       type: string;
     };
   const { socket } = useSocket()
-  // console.log(import.meta.env.PROD, import.meta.env.MODE, import.meta.env.BASE_URL);
 
   const [messages, setMessages] = useState<any>([]);
   const [message, setMessage] = useState("");
@@ -45,7 +44,6 @@ export default function Page() {
     },
   });
   const scroll = useRef<HTMLSpanElement | null>(null);
-  const navigate = useNavigate();
 
   function onSubmit(values: z.infer<typeof messageSchema>) {
     if (values.message.trim()) {

@@ -182,7 +182,7 @@ if (cluster.isPrimary) {
 
         // If Redis cache is empty, load from MongoDB and cache it
         if (messages.length === 0) {
-          cacheActive = false;
+          // cacheActive = false;
           messages = await Message.find({ chatRoom: roomId })
             .populate("sender", "name email role location")
             .sort({ createdAt: -1 })
