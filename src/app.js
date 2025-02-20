@@ -30,7 +30,8 @@ import Message from "./models/Message.js";
 import ChatRoom from "./models/ChatGroup.js";
 import User from "./models/User.js";
 // cache db
-import redis from "./utils/redisClient.js";
+// import redis from "./utils/redisClient.js";
+const usersMap = new Map()
 
 dotenv.config();
 
@@ -148,7 +149,8 @@ if (cluster.isPrimary) {
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}`);
     // add socket id to session
-    redis.set(`socket:${socket.request.session.user._id}`, socket.id);
+    // redis.set(`socket:${socket.request.session.user._id}`, socket.id);
+    usersMap.set(`socket:${socket.request.session.user._id}`, socket.id)
 
     socket.on("join_room", async (roomId, callback) => {
       try {
@@ -169,13 +171,14 @@ if (cluster.isPrimary) {
         socket.join(roomId);
         console.log(`User ${userId} joined room: ${roomId}`);
         // Try fetching messages from Redis
-        let cacheActive = true;
-        let messages = await redis.lrange(`chat:${roomId}`, 0, -1);
-        messages = messages.map(JSON.parse).sort((a, b) => {
-          const aDate = new Date(a.createdAt);
-          const bDate = new Date(b.createdAt);
-          return aDate - bDate;
-        }); // Convert stored strings to objects
+        // let cacheActive = true;
+        // let messages = await redis.lrange(`chat:${roomId}`, 0, -1);
+        // messages = messages.map(JSON.parse).sort((a, b) => {
+        //   const aDate = new Date(a.createdAt);
+        //   const bDate = new Date(b.createdAt);
+        //   return aDate - bDate;
+        // }); // Convert stored strings to objects
+        let messages = [] // suspend redis caching for now
 
         // If Redis cache is empty, load from MongoDB and cache it
         if (messages.length === 0) {
@@ -187,19 +190,20 @@ if (cluster.isPrimary) {
             .lean();
 
           // Cache messages in Redis
-          if (messages.length > 0) {
-            const cacheData = messages.map((msg) => JSON.stringify(msg));
-            await redis.lpush(`chat:${roomId}`, ...cacheData);
-            await redis.ltrim(`chat:${roomId}`, 0, 19); // Store only the latest 20
-            // Reset expiration time on access
-            await redis.expire(`chat:${roomId}`, 86400); // Expire after 24 hours
-          }
+          // if (messages.length > 0) {
+          //   const cacheData = messages.map((msg) => JSON.stringify(msg));
+          //   await redis.lpush(`chat:${roomId}`, ...cacheData);
+          //   await redis.ltrim(`chat:${roomId}`, 0, 19); // Store only the latest 20
+          //   // Reset expiration time on access
+          //   await redis.expire(`chat:${roomId}`, 86400); // Expire after 24 hours
+          // }
         }
 
         // Send messages back in the correct order (oldest first)
         callback({
           success: `Joined room: ${roomId}`,
-          messages: cacheActive ? messages : messages.reverse(),
+          messages: messages.reverse(),
+          // messages: cacheActive ? messages : messages.reverse(),
         });
       } catch (error) {
         callback({ error: "Error joining chat room." });
@@ -211,7 +215,8 @@ if (cluster.isPrimary) {
       async ({ roomId, lastMessageId }, callback) => {
         try {
           // Try to get messages from Redis
-          let messages = await redis.lrange(`chat:${roomId}`, -50, -1);
+          // let messages = await redis.lrange(`chat:${roomId}`, -50, -1);
+          let messages = [];
           messages = messages.map(JSON.parse);
 
           // If Redis cache is insufficient, fetch from MongoDB
@@ -228,16 +233,16 @@ if (cluster.isPrimary) {
             callback({ messages: olderMessages.reverse() });
 
             // Cache older messages
-            if (olderMessages.length > 0) {
-              const cacheData = olderMessages.map((msg) => JSON.stringify(msg));
-              await redis.rpush(`chat:${roomId}`, ...cacheData);
-            }
+            // if (olderMessages.length > 0) {
+            //   const cacheData = olderMessages.map((msg) => JSON.stringify(msg));
+            //   await redis.rpush(`chat:${roomId}`, ...cacheData);
+            // }
           } else {
             callback({ messages: messages.reverse() });
           }
 
           // Reset expiration time on access
-          await redis.expire(`chat:${roomId}`, 86400);
+          // await redis.expire(`chat:${roomId}`, 86400);
         } catch (error) {
           callback({ error: "Error loading more messages." });
         }
@@ -291,7 +296,7 @@ if (cluster.isPrimary) {
         });
       }
 
-      const otherUserSocketId = await redis.get(`socket:${otherUser._id}`);
+      const otherUserSocketId = usersMap.get(`socket:${otherUser._id}`);
       io.to(otherUserSocketId).emit("private_chat_created", {
         ...chatRoom._doc,
         name: socket.request.session.user.name.replace(/ /g, "_"),
@@ -316,15 +321,16 @@ if (cluster.isPrimary) {
       );
 
       // Store in Redis
-      await redis.lpush(`chat:${chatRoom}`, JSON.stringify(populatedMessage));
-      await redis.ltrim(`chat:${chatRoom}`, 0, 19); // Keep last 20 messages
-      await redis.expire(`chat:${chatRoom}`, 86400); // Expire after 24 hours
+      // await redis.lpush(`chat:${chatRoom}`, JSON.stringify(populatedMessage));
+      // await redis.ltrim(`chat:${chatRoom}`, 0, 19); // Keep last 20 messages
+      // await redis.expire(`chat:${chatRoom}`, 86400); // Expire after 24 hours
 
       io.to(chatRoom).emit("receive_message", populatedMessage);
     });
 
     socket.on("disconnect", async () => {
-      await redis.del(`socket:${socket.request.session.user._id}`);
+      // await redis.del(`socket:${socket.request.session.user._id}`);
+      usersMap.delete(`socket:${socket.request.session.user._id}`)
       console.log(`User disconnected: ${socket.id}`);
     });
   });
@@ -347,6 +353,6 @@ if (cluster.isPrimary) {
 // handle server shutdown gracefully
 process.on("SIGINT", async () => {
   console.log("Closing Redis and MongoDB connections...");
-  await redis.quit();
+  // await redis.quit();
   process.exit(0);
 });
